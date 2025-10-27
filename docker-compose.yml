@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # Наш фронтенд на Nginx - это точка входа для пользователя
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      # Мы открываем порт 8081 наружу, чтобы не конфликтовать с 8080 от бэкенда
+      - "8081:80"
+    depends_on:
+      - backend
+
+  # Наш бэкенд на Tomcat
+  backend:
+    build:
+      context: ./backend
+    ports:
+      # Этот порт теперь не обязательно открывать наружу,
+      # т.к. с ним общается только Nginx внутри Docker-сети
+      - "8080:8080"
+    depends_on:
+      - db
+
+  # Наша база данных
+  db:
+    image: postgres:14-alpine
+    environment:
+      - POSTGRES_DB=kino_db
+      - POSTGRES_USER=comrade
+      - POSTGRES_PASSWORD=secret_password
+    ports:
+      - "54321:5432"
+    volumes:
+      # Важно: путь теперь относительный от docker-compose.yml
+      - ./backend/db/init:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U comrade -d kino_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

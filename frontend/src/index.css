@@ -1,0 +1,141 @@
+/* src/index.css */
+
+body {
+    background-color: #333;
+    color: #eee;
+    font-family: 'Helvetica Neue', sans-serif;
+    padding: 20px;
+}
+
+h1, h2 {
+    color: #ffc107; /* Золотой, как купола */
+    border-bottom: 2px solid #555;
+    padding-bottom: 10px;
+}
+
+/* --- Стили для таблицы --- */
+.controls {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+input[type="text"], input[type="number"], select {
+    background-color: #555;
+    color: #fff;
+    border: 1px solid #777;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #dc3545; /* Красный, как знамя */
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+button:hover {
+    background-color: #c82333;
+}
+button:disabled {
+    background-color: #777;
+    cursor: not-allowed;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+th, td {
+    border: 1px solid #555;
+    padding: 10px;
+    text-align: left;
+}
+th {
+    background-color: #444;
+    cursor: pointer;
+}
+tbody tr:nth-child(even) {
+    background-color: #3a3a3a;
+}
+tbody tr:hover {
+    background-color: #4f4f4f;
+}
+
+.pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+/* --- Стили для формы --- */
+.movie-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 80vh; /* Чтобы форма скроллилась, если не влезает */
+    overflow-y: auto;
+    padding-right: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.form-group-row {
+    display: flex;
+    gap: 15px;
+}
+.form-group-row .form-group {
+    flex: 1;
+}
+
+.form-group label {
+    font-weight: bold;
+    color: #ccc;
+}
+.form-group input, .form-group select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.error-message {
+    color: #ffc107;
+    background-color: #dc3545;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+}
+.error-text {
+    color: #ffc107;
+    font-size: 0.9em;
+}
+
+/* --- Стили для модального окна --- */
+.ReactModal__Overlay {
+    opacity: 0;
+    transition: opacity 200ms ease-in-out;
+    background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+.ReactModal__Overlay--after-open{
+    opacity: 1;
+}
+
+.ReactModal__Overlay--before-close{
+    opacity: 0;
+}
+.ReactModal__Content {
+    background-color: #333 !important;
+    border: 1px solid #555 !important;
+    color: #eee !important;
+    max-width: 600px;
+    margin: auto;
+}
