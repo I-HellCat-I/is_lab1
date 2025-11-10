@@ -139,3 +139,126 @@ tbody tr:hover {
     max-width: 600px;
     margin: auto;
 }
+
+.management-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.management-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.management-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 1em;
+}
+
+.management-button:hover {
+    background-color: #c82333;
+}
+
+.management-button.back-button {
+    background-color: #6c757d;
+}
+
+.management-button.back-button:hover {
+    background-color: #5a6268;
+}
+
+.management-info {
+    background-color: #444;
+    padding: 15px;
+    border-radius: 4px;
+    border-left: 4px solid #ffc107;
+}
+
+.management-info ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.management-info li {
+    margin: 5px 0;
+}
+
+.success-message {
+    background-color: #28a745;
+    color: white;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.location-form,
+.person-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding-right: 15px;
+}
+
+.location-select-wrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.location-select-wrapper select {
+    flex: 1;
+}
+
+.add-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.add-button:hover {
+    background-color: #0056b3;
+}
+
+.quick-add-section {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.quick-add-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.9em;
+}
+
+.quick-add-button:hover {
+    background-color: #0056b3;
+}
+
+.management-link-button {
+    background-color: #6c757d;
+}
+
+.management-link-button:hover {
+    background-color: #5a6268;
+}

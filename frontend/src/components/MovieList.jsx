@@ -3,6 +3,8 @@ import axios from 'axios';
 import Modal from 'react-modal';
 import { FaSort, FaSortUp, FaSortDown, FaEdit, FaTrash } from 'react-icons/fa';
 import MovieForm from './MovieForm';
+import PersonForm from './PersonForm';
+import LocationForm from './LocationForm';
 
 // Устанавливаем корневой элемент для модального окна
 Modal.setAppElement('#root');
@@ -19,7 +21,7 @@ const headers = [
     { key: 'length', name: 'Длительность' }
 ];
 
-function MovieList() {
+function MovieList({ onNavigateToManagement }) {
     // --- Состояния ---
     const [movies, setMovies] = useState([]);
     const [pageInfo, setPageInfo] = useState({ currentPage: 0, totalPages: 0 });
@@ -30,6 +32,8 @@ function MovieList() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState(null);
+    const [personModalOpen, setPersonModalOpen] = useState(false);
+    const [locationModalOpen, setLocationModalOpen] = useState(false);
 
     // --- Загрузка данных ---
     const fetchMovies = useCallback(async () => {
@@ -74,6 +78,22 @@ function MovieList() {
         // Нам НЕ нужно вызывать fetchMovies() здесь!
         // Бэкенд пришлет WebSocket-сообщение, и наш useEffect
         // сам обработает обновление. Это и есть реактивность!
+    };
+
+    const handleAddPerson = () => {
+        setPersonModalOpen(true);
+    };
+
+    const handleAddLocation = () => {
+        setLocationModalOpen(true);
+    };
+
+    const handlePersonSave = (person) => {
+        setPersonModalOpen(false);
+    };
+
+    const handleLocationSave = (location) => {
+        setLocationModalOpen(false);
     };
 
     // --- Эффекты ---
@@ -190,6 +210,7 @@ function MovieList() {
                     onChange={handleFilterChange}
                 />
                 <button onClick={openCreateModal}>Добавить фильм</button>
+                <button onClick={onNavigateToManagement} className="management-link-button">Управление данными</button>
             </div>
 
             {loading && <div>Загрузка данных с Политбюро...</div>}
@@ -232,6 +253,29 @@ function MovieList() {
                     movie={selectedMovie}
                     onSave={handleSave}
                     onCancel={closeModal}
+                    onAddPerson={handleAddPerson}
+                    onAddLocation={handleAddLocation}
+                />
+            </Modal>
+
+            <Modal
+                isOpen={personModalOpen}
+                onRequestClose={() => setPersonModalOpen(false)}
+                contentLabel="Форма персоны">
+                <PersonForm
+                    onSave={handlePersonSave}
+                    onCancel={() => setPersonModalOpen(false)}
+                    onAddLocation={handleAddLocation}
+                />
+            </Modal>
+
+            <Modal
+                isOpen={locationModalOpen}
+                onRequestClose={() => setLocationModalOpen(false)}
+                contentLabel="Форма локации">
+                <LocationForm
+                    onSave={handleLocationSave}
+                    onCancel={() => setLocationModalOpen(false)}
                 />
             </Modal>
         </div>

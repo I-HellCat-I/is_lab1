@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const MOVIES_API = '/api/movies';
 const PERSONS_API = '/api/persons';
+const LOCATIONS_API = '/api/locations';
 const ENUMS_API = '/api/meta/enums';
 
 const emptyMovieForm = {
@@ -21,7 +22,7 @@ const emptyMovieForm = {
     genre: '',
 };
 
-function MovieForm({ movie, onSave, onCancel }) {
+function MovieForm({ movie, onSave, onCancel, onAddPerson, onAddLocation }) {
     const [formData, setFormData] = useState(emptyMovieForm);
     const [errors, setErrors] = useState({});
     const [persons, setPersons] = useState([]);
@@ -64,6 +65,15 @@ function MovieForm({ movie, onSave, onCancel }) {
 
         fetchPrerequisites();
     }, [movie]);
+
+    const refreshPersons = async () => {
+        try {
+            const response = await axios.get(PERSONS_API);
+            setPersons(response.data);
+        } catch (error) {
+            console.error('Ошибка при обновлении списка персон:', error);
+        }
+    };
 
     const validate = () => {
         const newErrors = {};
@@ -147,6 +157,12 @@ function MovieForm({ movie, onSave, onCancel }) {
             ))}
 
             {/* Выпадающие списки */}
+            <div className="quick-add-section">
+                <button type="button" onClick={onAddPerson} className="quick-add-button">
+                    + Добавить персону
+                </button>
+            </div>
+
             {[
                 { name: 'screenwriterId', label: 'Сценарист', options: persons },
                 { name: 'directorId', label: 'Режиссер', options: persons },

@@ -117,6 +117,19 @@ public class EntityMapper {
         return persons.stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    public List<LocationDTO> toLocationDtoList(List<Location> locations) {
+        if (locations == null) return null;
+        return locations.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    public LocationDTO toLocationDto(Location location) {
+        return toDto(location);
+    }
+
+    public Location toLocation(LocationDTO dto) {
+        return toEntity(dto);
+    }
+
     // Утилитарный метод для маппинга списков фильмов
     public List<MovieDTO> toMovieDtoList(List<Movie> movies) {
         if (movies == null) return null;

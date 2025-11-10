@@ -1,35 +1,34 @@
 package com.hellcat.backend.rest;
 
 import com.hellcat.backend.dto.PersonDTO;
-import com.hellcat.backend.repository.PersonRepository;
-import com.hellcat.backend.util.EntityMapper;
+import com.hellcat.backend.service.PersonService;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.net.URI;
 import java.util.List;
 
 @Path("/persons")
 @Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class PersonResource {
 
     @Inject
-    private PersonRepository personRepository;
+    private PersonService personService;
 
-    @Inject
-    private EntityMapper mapper;
-
-    /**
-     * Возвращает полный список всех персон (режиссеров, сценаристов и т.д.),
-     * существующих в системе, для использования в выпадающих списках на клиенте.
-     * @return Response, содержащий список PersonDTO.
-     */
     @GET
     public Response getAllPersons() {
-        List<PersonDTO> personDTOs = mapper.toPersonDtoList(personRepository.findAll());
+        List<PersonDTO> personDTOs = personService.getAllPersons();
         return Response.ok(personDTOs).build();
+    }
+
+    @POST
+    public Response createPerson(PersonDTO personDTO) {
+        PersonDTO createdPerson = personService.createPerson(personDTO);
+        return Response.created(URI.create("/api/persons/" + createdPerson.getId()))
+                .entity(createdPerson)
+                .build();
     }
 }

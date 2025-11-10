@@ -33,4 +33,13 @@ public class PersonRepository {
                         "SELECT p FROM Person p JOIN FETCH p.location", Person.class)
                 .getResultList();
     }
+
+    public Person save(Person person) {
+        if (person.getId() == null) {
+            em.persist(person);
+        } else {
+            person = em.merge(person);
+        }
+        return person;
+    }
 }
