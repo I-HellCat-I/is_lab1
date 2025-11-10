@@ -49,7 +49,7 @@ function MovieList() {
                 totalPages: response.data.totalPages,
             });
         } catch (err) {
-            setError('Блядь! Не могу получить список фильмов от ЦК.');
+            setError('Не могу получить список фильмов от ЦК.');
         } finally {
             setLoading(false);
         }
