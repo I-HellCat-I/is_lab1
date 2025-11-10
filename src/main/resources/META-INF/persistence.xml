@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="3.0"
+             xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+
+    <!-- Используем JTA, как и подобает в полноценном сервере приложений -->
+    <persistence-unit name="KinoPU" transaction-type="JTA">
+        <!-- JNDI-имя для DataSource в Payara/GlassFish по умолчанию -->
+        <jta-data-source>jdbc/KinoDS</jta-data-source>
+
+        <properties>
+            <!-- EclipseLink будет работать в JTA-режиме -->
+            <property name="eclipselink.target-server" value="Payara"/>
+            <property name="eclipselink.ddl-generation" value="drop-and-create"/>
+            <property name="eclipselink.logging.level.sql" value="FINE"/>
+            <property name="eclipselink.logging.parameters" value="true"/>
+            <property name="eclipselink.target-database" value="PostgreSQL"/>
+        </properties>
+    </persistence-unit>
+</persistence>

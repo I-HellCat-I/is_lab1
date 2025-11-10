@@ -1,0 +1,44 @@
+plugins {
+    id 'java'
+    id 'war'
+}
+
+group = 'com.hellcat.backend'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+// ... версии остаются теми же ...
+
+dependencies {
+    // ---- ОСНОВНОЙ АППАРАТ ПАРТИИ (ТЕПЕРЬ ТАЩИМ С СОБОЙ) ----
+    // API нам всё ещё нужны для компиляции
+    providedCompile "jakarta.platform:jakarta.jakartaee-api:10.0.0"
+
+    // ---- РЕАЛИЗАЦИЯ CDI (WELD) ----
+    // Weld - это реализация CDI от JBoss.
+    implementation 'org.jboss.weld.servlet:weld-servlet-core:5.1.2.Final'
+
+    // ---- РЕАЛИЗАЦИЯ JAX-RS (JERSEY) ----
+    // Jersey - это реализация JAX-RS.
+    implementation 'org.glassfish.jersey.containers:jersey-container-servlet:3.1.5'
+    implementation 'org.glassfish.jersey.media:jersey-media-json-jackson:3.1.5'
+    implementation 'org.glassfish.jersey.inject:jersey-cdi2-se:3.1.5' // Интеграция Jersey с CDI
+
+    // ---- JPA (ECLIPSELINK) - без изменений ----
+    implementation 'org.eclipse.persistence:org.eclipse.persistence.jpa:4.0.2'
+    implementation 'org.eclipse.persistence:org.eclipse.persistence.asm:4.0.2'
+    implementation 'org.postgresql:postgresql:42.7.1'
+
+    // ---- WEBSOCKET - Tomcat это умеет, API нужно для компиляции ----
+    providedCompile 'jakarta.websocket:jakarta.websocket-api:2.1.1'
+
+    // ... Lombok, Logback, JUnit - без изменений ...
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    implementation 'ch.qos.logback:logback-classic:1.4.14'
+}
+
+// ... остальное без изменений ...
