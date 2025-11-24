@@ -1,0 +1,40 @@
+# --- ПРИКАЗ О ПРИЁМЕ МЕЖДУНАРОДНОГО ТРАФИКА ---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kinoarxiv-ingress
+  annotations:
+    # Эти аннотации важны для NGINX Ingress Controller.
+    # Они разрешают WebSocket и увеличивают таймауты.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "backend-service"
+spec:
+  rules:
+    - host: localhost # ЗАМЕНИ НА СВОЙ ДОМЕН!
+      http:
+        paths:
+          # Все запросы к API (/api/...) идут на бэкенд
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 1917
+          # Запросы к WebSocket тоже на бэкенд
+          - path: /ws-connect
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 1917
+          # Все остальные запросы (/) идут на фронтенд
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 80

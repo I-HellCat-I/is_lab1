@@ -1,0 +1,83 @@
+# --- ЗАЯВКА НА ЗЕМЛЮ: Хранилище для данных ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce # Только один под может писать сюда одновременно. Порядок, блядь!
+  resources:
+    requests:
+      storage: 5Gi # Запрашиваем 5 гигов под наш архив. Для начала хватит.
+
+---
+# --- ГОСУДАРСТВЕННАЯ ТАЙНА: Секрет с паролем ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+type: Opaque
+stringData:
+  POSTGRES_PASSWORD: "YourSuperSecretPassword" # ЗАМЕНИ НА СВОЙ СЕКРЕТНЫЙ ПАРОЛЬ!
+
+---
+# --- ПРИКАЗ О РАЗВЁРТЫВАНІИ БАЗЫ ДАННЫХ ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: "studs"
+            - name: POSTGRES_USER
+              value: "sXXXXXX"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: postgres-storage # Наше постоянное хранилище
+              mountPath: /var/lib/postgresql/data
+            # --- НОВАЯ, БЛЯДЬ, СТРОКА! Монтируем наш init.sql ---
+            - name: postgres-init-scripts
+              mountPath: /docker-entrypoint-initdb.d # Та самая магическая директория
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+        # --- НОВЫЙ, БЛЯДЬ, РАЗДЕЛ! Описываем, откуда брать init.sql ---
+        # \is1\k8s> kubectl create configmap postgres-init-script --from-file=init.sql
+        - name: postgres-init-scripts
+          configMap:
+            name: postgres-init-script # Имя нашего ConfigMap
+
+---
+# --- ВНУТРЕННЯЯ ЛИНИЯ СВЯЗИ: Сервис для базы данных ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-db-service # Вот по этому имени бэкенд будет находить базу!
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP # Сервис доступен только внутри кластера.

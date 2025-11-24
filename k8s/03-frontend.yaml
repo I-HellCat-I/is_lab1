@@ -1,0 +1,38 @@
+# --- ПРИКАЗ О РАЗВЁРТЫВАНІИ ФРОНТЕНДА ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 2 # Тоже две, пропаганда не должна останавливаться!
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: krasniy-kinoarxiv-frontend
+          image: callmehat/krasniy-kinoarxiv-frontend:latest # ТВОЙ ОБРАЗ ФРОНТА!
+          ports:
+            - containerPort: 3000 # Next.js обычно слушает на 3000
+          env:
+            - name: NEXT_PUBLIC_API_URL # Передаём адрес бэкенда в фронтенд
+              value: "http://localhost" # АДРЕС ТВОЕГО ДОМЕНА! Ingress будет рулить.
+
+---
+# --- ВНУТРЕННЯЯ СВЯЗЬ АГИТПРОПА: Сервис для фронтенда ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: ClusterIP

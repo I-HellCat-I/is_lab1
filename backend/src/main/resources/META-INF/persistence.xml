@@ -4,18 +4,23 @@
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
 
-    <!-- Используем JTA, как и подобает в полноценном сервере приложений -->
-    <persistence-unit name="KinoPU" transaction-type="JTA">
-        <!-- JNDI-имя для DataSource в Payara/GlassFish по умолчанию -->
-        <jta-data-source>jdbc/KinoDS</jta-data-source>
+    <persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
+        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+
+        <!-- ЯВНОЕ ПЕРЕЧИСЛЕНИЕ ВСЕХ СУЩНОСТЕЙ -->
+        <class>com.hellcat.movie_app.entity.Movie</class>
+        <class>com.hellcat.movie_app.entity.Person</class>
+        <class>com.hellcat.movie_app.entity.Coordinates</class>
+        <class>com.hellcat.movie_app.entity.Location</class>
+
+        <!-- Это говорит, что даже если мы что-то не перечислили,
+             он все равно должен попытаться найти -->
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
 
         <properties>
-            <!-- EclipseLink будет работать в JTA-режиме -->
-            <property name="eclipselink.target-server" value="Payara"/>
-            <property name="eclipselink.ddl-generation" value="drop-and-create"/>
-            <property name="eclipselink.logging.level.sql" value="FINE"/>
-            <property name="eclipselink.logging.parameters" value="true"/>
-            <property name="eclipselink.target-database" value="PostgreSQL"/>
+            <property name="eclipselink.target-database" value="org.eclipse.persistence.platform.database.PostgreSQLPlatform"/>
+            <!-- Мы также можем переместить свойство weaving сюда для централизации -->
+            <property name="eclipselink.weaving" value="false"/>
         </properties>
     </persistence-unit>
 </persistence>

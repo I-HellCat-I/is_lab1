@@ -11,35 +11,47 @@ services:
     depends_on:
       - backend
 
-  # Наш бэкенд на Tomcat
   backend:
     build:
       context: ./backend
+      cache_from:
+        - gradle_cache:/home/gradle/.gradle
+    restart: unless-stopped
     ports:
       # Этот порт теперь не обязательно открывать наружу,
       # т.к. с ним общается только Nginx внутри Docker-сети
       - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/moviedb
+      SPRING_DATASOURCE_USERNAME: movieuser
+      SPRING_DATASOURCE_PASSWORD: moviepassword
+      SPRING_JPA_DATABASE-PLATFORM: org.eclipse.persistence.platform.database.PostgreSQLPlatform
+      # ВАЖНО: отключаем автоматическую генерацию схемы от JPA, так как мы управляем ей сами
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate # или none
     depends_on:
-      - db
+      db:
+        condition: service_healthy # <--- Ждать, пока healthcheck не пройдет
 
   # Наша база данных
   db:
-    image: postgres:14-alpine
+    image: postgres:16
+    container_name: is-1_db
     environment:
-      - POSTGRES_DB=kino_db
-      - POSTGRES_USER=comrade
-      - POSTGRES_PASSWORD=secret_password
+      POSTGRES_DB: moviedb
+      POSTGRES_USER: movieuser
+      POSTGRES_PASSWORD: moviepassword
     ports:
       - "54321:5432"
     volumes:
       # Важно: путь теперь относительный от docker-compose.yml
-      - ./backend/db/init:/docker-entrypoint-initdb.d
+      - ./backend/db-init:/docker-entrypoint-initdb.d
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U comrade -d kino_db"]
+      test: ["CMD-SHELL", "pg_isready -U movieuser -d moviedb"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
   postgres_data:
+  gradle_cache:

@@ -1,0 +1,57 @@
+# --- ПАРТИЙНЫЕ ДИРЕКТИВЫ: Настройки для бэкенда ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+data:
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-db-service:5432/studs"
+
+---
+# --- ПРИКАЗ О РАЗВЁРТЫВАНІИ БЭКЕНДА ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 2 # Две реплики для отказоустойчивости! Если одна ячейка падёт, другая подхватит знамя!
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: krasniy-kinoarxiv-backend
+          image: your-dockerhub-username/krasniy-kinoarxiv-backend:latest # ТВОЙ ОБРАЗ!
+          ports:
+            - containerPort: 8080 # Tomcat слушает на 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "sXXXXXX" # ТВОЙ ЛОГИН!
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: POSTGRES_PASSWORD # Тот же секрет, что и для базы!
+
+---
+# --- ВНУТРЕННЯЯ СВЯЗЬ ШТАБА: Сервис для бэкенда ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 1917 # Сервис будет слушать на порту 1917
+      targetPort: 8080 # И перенаправлять на 8080 в подах
+  type: ClusterIP

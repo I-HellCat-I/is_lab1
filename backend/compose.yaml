@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: movie_db
+    environment:
+      POSTGRES_USER: movieuser
+      POSTGRES_PASSWORD: moviepassword
+      POSTGRES_DB: moviedb
+    ports:
+      - "5432:5432"
+    volumes:
+      # Этот том по-прежнему нужен для сохранения данных между перезапусками
+      - postgres_data:/var/lib/postgresql/data
+      # НОВЫЙ ТОМ: монтируем нашу директорию со скриптом в специальную папку внутри контейнера
+      - ./db-init:/docker-entrypoint-initdb.d
+    networks:
+      - movie-network
+
+  app:
+    container_name: movie_app
+    build: .
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/moviedb
+      SPRING_DATASOURCE_USERNAME: movieuser
+      SPRING_DATASOURCE_PASSWORD: moviepassword
+      SPRING_JPA_DATABASE-PLATFORM: org.eclipse.persistence.platform.database.PostgreSQLPlatform
+      # ВАЖНО: отключаем автоматическую генерацию схемы от JPA, так как мы управляем ей сами
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate # или none
+    networks:
+      - movie-network
+
+networks:
+  movie-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
