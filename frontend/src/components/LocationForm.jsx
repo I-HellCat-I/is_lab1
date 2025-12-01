@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import axios from 'axios';
 
 const LOCATIONS_API = '/api/locations';
@@ -9,10 +9,20 @@ const emptyLocationForm = {
     y: '',
 };
 
-function LocationForm({ onSave, onCancel }) {
+function LocationForm({ onSave, onCancel, initialData }) {
     const [formData, setFormData] = useState(emptyLocationForm);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                name: initialData.name,
+                x: initialData.x,
+                y: initialData.y
+            });
+        }
+    }, [initialData]);
 
     const validate = () => {
         const newErrors = {};
@@ -57,7 +67,7 @@ function LocationForm({ onSave, onCancel }) {
 
     return (
         <form onSubmit={handleSubmit} className="location-form">
-            <h2>Создание новой локации</h2>
+            <h2>{initialData ? 'Редактирование локации' : 'Создание локации'}</h2>
             {errors.general && <p className="error-message">{errors.general}</p>}
 
             <div className="form-group">

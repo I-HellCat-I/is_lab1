@@ -24,4 +24,17 @@ public class LocationService {
         location.setY(dto.getY());
         return locationRepository.save(location);
     }
+
+    public Location update(Long id, LocationDto dto) {
+        Location location = locationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Локация не найдена")); // Лучше использовать EntityNotFoundException
+        location.setName(dto.getName());
+        location.setX(dto.getX());
+        location.setY(dto.getY());
+        return locationRepository.save(location);
+    }
+
+    public void delete(Long id) {
+        locationRepository.deleteById(id);
+    }
 }

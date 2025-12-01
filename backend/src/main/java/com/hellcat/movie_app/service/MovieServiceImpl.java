@@ -1,5 +1,6 @@
 package com.hellcat.movie_app.service;
 
+import com.hellcat.movie_app.config.MovieWebSocketHandler;
 import com.hellcat.movie_app.dto.*;
 import com.hellcat.movie_app.entity.*;
 import com.hellcat.movie_app.exception.EntityNotFoundException;
@@ -7,9 +8,10 @@ import com.hellcat.movie_app.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -21,7 +23,7 @@ public class MovieServiceImpl implements MovieService {
     private final MovieRepository movieRepository;
     private final PersonRepository personRepository;
     private final CoordinatesRepository coordinatesRepository;
-    private final SimpMessagingTemplate messagingTemplate; // Для WebSocket
+    private final MovieWebSocketHandler webSocketHandler; // Для WebSocket
 
     private final String WS_TOPIC = "/topic/movies";
 
@@ -50,7 +52,12 @@ public class MovieServiceImpl implements MovieService {
         // В данном случае Movie является центральным объектом. Удаление Person, если он режиссер,
         // потребовало бы более сложной проверки. Удаление самого фильма не нарушает это правило в явном виде.
         movieRepository.deleteById(id);
-        messagingTemplate.convertAndSend(WS_TOPIC, new WebSocketMessage("DELETE", movieToDelete));
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                webSocketHandler.broadcast(new WebSocketMessage("DELETED", movieToDelete));
+            }
+        });
     }
 
     // --- Специальные операции ---
@@ -86,7 +93,7 @@ public class MovieServiceImpl implements MovieService {
         if (!directors.isEmpty()) {
             movieRepository.resetOscarsForDirectors(directors);
             // Здесь можно отправить WebSocket-уведомление об массовом обновлении, если требуется
-            messagingTemplate.convertAndSend(WS_TOPIC, new WebSocketMessage("BATCH_UPDATE", "Oscars reset for directors of genre " + genre));
+            webSocketHandler.broadcast(new WebSocketMessage("BATCH_UPDATE", "Oscars reset for directors of genre " + genre));
         }
     }
 
@@ -96,7 +103,12 @@ public class MovieServiceImpl implements MovieService {
         Movie movie = new Movie();
         mapDtoToEntity(movie, movieDto); // Используем маппер
         Movie savedMovie = movieRepository.save(movie);
-        messagingTemplate.convertAndSend("/topic/movies", new WebSocketMessage("CREATED", savedMovie));
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                webSocketHandler.broadcast(new WebSocketMessage("CREATED", savedMovie));
+            }
+        });
         return savedMovie;
     }
 
@@ -106,7 +118,12 @@ public class MovieServiceImpl implements MovieService {
         Movie existingMovie = findById(id);
         mapDtoToEntity(existingMovie, movieDto); // Используем маппер
         Movie updatedMovie = movieRepository.save(existingMovie);
-        messagingTemplate.convertAndSend("/topic/movies", new WebSocketMessage("UPDATED", updatedMovie));
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                webSocketHandler.broadcast(new WebSocketMessage("UPDATED", updatedMovie));
+            }
+        });
         return updatedMovie;
     }
 

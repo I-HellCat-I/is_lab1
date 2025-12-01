@@ -8,40 +8,42 @@ const emptyPersonForm = {
     name: '',
     eyeColor: '',
     hairColor: '',
-    weight: '',
+    height: '',
     nationality: '',
     locationId: '',
 };
 
-const colors = ['GREEN', 'BLUE', 'YELLOW', 'WHITE'];
-const nationalities = ['RUSSIA', 'SOUTH_KOREA', 'NORTH_KOREA'];
+const colors = ['GREEN', 'BLUE', 'YELLOW', 'WHITE', 'RED', 'BLACK', 'BROWN'];
+const nationalities = ['RUSSIA', 'SOUTH_KOREA', 'NORTH_KOREA', 'USA', 'VATICAN'];
 
-function PersonForm({ onSave, onCancel, onAddLocation }) {
+function PersonForm({ onSave, onCancel, initialData, onAddLocation }) {
     const [formData, setFormData] = useState(emptyPersonForm);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [locations, setLocations] = useState([]);
 
     useEffect(() => {
-        const fetchLocations = async () => {
-            try {
-                const response = await axios.get(LOCATIONS_API);
-                setLocations(response.data);
-            } catch (error) {
-                setErrors(prev => ({ ...prev, general: 'Не могу загрузить локации.' }));
-            }
-        };
+        axios.get(LOCATIONS_API).then(res => setLocations(res.data));
 
-        fetchLocations();
-    }, []);
+        if (initialData) {
+            setFormData({
+                name: initialData.name,
+                eyeColor: initialData.eyeColor,
+                hairColor: initialData.hairColor,
+                height: initialData.height, // Важно: на бэке это height, на фронте в старом коде был weight, исправляем на height
+                nationality: initialData.nationality,
+                locationId: initialData.location ? initialData.location.id : ''
+            });
+        }
+    }, [initialData]);
 
     const validate = () => {
         const newErrors = {};
         if (!formData.name.trim()) newErrors.name = 'Имя персоны не может быть пустым.';
         if (!formData.eyeColor) newErrors.eyeColor = 'Необходимо выбрать цвет глаз.';
         if (!formData.hairColor) newErrors.hairColor = 'Необходимо выбрать цвет волос.';
-        if (!formData.weight || isNaN(Number(formData.weight)) || Number(formData.weight) <= 0)
-            newErrors.weight = 'Вес должен быть положительным числом.';
+        if (!formData.height || isNaN(Number(formData.height)) || Number(formData.height) <= 0)
+            newErrors.height = 'Вес должен быть положительным числом.';
         if (!formData.nationality) newErrors.nationality = 'Необходимо выбрать национальность.';
         if (!formData.locationId) newErrors.locationId = 'Необходимо выбрать локацию.';
 
@@ -69,7 +71,7 @@ function PersonForm({ onSave, onCancel, onAddLocation }) {
             name: formData.name.trim(),
             eyeColor: formData.eyeColor,
             hairColor: formData.hairColor,
-            weight: parseInt(formData.weight, 10),
+            height: parseInt(formData.height, 10),
             nationality: formData.nationality,
             location: {
                 id: parseInt(formData.locationId, 10),
@@ -90,7 +92,7 @@ function PersonForm({ onSave, onCancel, onAddLocation }) {
 
     return (
         <form onSubmit={handleSubmit} className="person-form">
-            <h2>Создание новой персоны</h2>
+            <h2>{initialData ? 'Редактирование персоны' : 'Создание персоны'}</h2>
             {errors.general && <p className="error-message">{errors.general}</p>}
 
             <div className="form-group">
@@ -127,15 +129,15 @@ function PersonForm({ onSave, onCancel, onAddLocation }) {
 
             <div className="form-group-row">
                 <div className="form-group">
-                    <label>Вес (кг)</label>
+                    <label>Рост (см)</label>
                     <input
                         type="number"
-                        name="weight"
-                        value={formData.weight}
+                        name="height"
+                        value={formData.height}
                         onChange={handleChange}
-                        placeholder="Введите вес"
+                        placeholder="Введите рост"
                     />
-                    {errors.weight && <span className="error-text">{errors.weight}</span>}
+                    {errors.height && <span className="error-text">{errors.height}</span>}
                 </div>
 
                 <div className="form-group">

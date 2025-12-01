@@ -7,6 +7,15 @@ body {
     padding: 20px;
 }
 
+th.sortable {
+    cursor: pointer;
+    user-select: none; /* Чтобы текст не выделялся при частых кликах */
+}
+
+th.sortable:hover {
+    background-color: #f0f0f0; /* Легкая подсветка при наведении */
+}
+
 h1, h2 {
     color: #ffc107; /* Золотой, как купола */
     border-bottom: 2px solid #555;

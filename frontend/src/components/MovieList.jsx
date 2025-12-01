@@ -5,6 +5,7 @@ import { FaSort, FaSortUp, FaSortDown, FaEdit, FaTrash } from 'react-icons/fa';
 import MovieForm from './MovieForm';
 import PersonForm from './PersonForm';
 import LocationForm from './LocationForm';
+import { useNavigate } from 'react-router-dom';
 
 // Устанавливаем корневой элемент для модального окна
 Modal.setAppElement('#root');
@@ -21,10 +22,11 @@ const headers = [
     { key: 'length', name: 'Длительность' }
 ];
 
-function MovieList({ onNavigateToManagement }) {
+function MovieList() {
+    const navigate = useNavigate();
     // --- Состояния ---
     const [movies, setMovies] = useState([]);
-    const [pageInfo, setPageInfo] = useState({ currentPage: 0, totalPages: 0 });
+    const [pageInfo, setPageInfo] = useState({ currentPage: 0, totalPages: 1 });
     const [pagination, setPagination] = useState({ page: 0, size: 10 });
     const [sort, setSort] = useState({ field: 'id', direction: 'asc' });
     const [filter, setFilter] = useState('');
@@ -49,7 +51,7 @@ function MovieList({ onNavigateToManagement }) {
             const response = await axios.get(API_URL, { params });
             setMovies(response.data.content);
             setPageInfo({
-                currentPage: response.data.currentPage,
+                currentPage: response.data.number,
                 totalPages: response.data.totalPages,
             });
         } catch (err) {
@@ -210,19 +212,51 @@ function MovieList({ onNavigateToManagement }) {
                     onChange={handleFilterChange}
                 />
                 <button onClick={openCreateModal}>Добавить фильм</button>
-                <button onClick={onNavigateToManagement} className="management-link-button">Управление данными</button>
+                <button onClick={() => navigate('/management')} className="management-link-button">
+                    Управление данными
+                </button>
             </div>
 
             {loading && <div>Загрузка данных с Политбюро...</div>}
             {error && <div style={{color: 'red'}}>{error}</div>}
 
             <table>
-                {/* ... thead с renderSortIcon ... */}
+                <thead>
+                <tr>
+                    <th onClick={() => handleSort('id')}>
+                        ID {renderSortIcon('id')}
+                    </th>
+                    <th onClick={() => handleSort('name')}>
+                        Название {renderSortIcon('name')}
+                    </th>
+
+                    <th>Координаты</th>
+
+                    <th onClick={() => handleSort('oscarsCount')}>
+                        Оскары {renderSortIcon('oscarsCount')}
+                    </th>
+                    <th onClick={() => handleSort('director.name')}>
+                        Режиссер {renderSortIcon('director.name')}
+                    </th>
+                    <th onClick={() => handleSort('length')}>
+                        Длительность {renderSortIcon('length')}
+                    </th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
                 <tbody>
                 {movies.map(movie => (
                     <tr key={movie.id}>
                         <td>{movie.id}</td>
                         <td>{movie.name}</td>
+
+                        {/* --- ДОБАВЛЕНО: Вывод координат --- */}
+                        <td>
+                            {movie.coordinates
+                                ? `X: ${movie.coordinates.x}, Y: ${movie.coordinates.y}`
+                                : 'Н/Д'}
+                        </td>
+
                         <td>{movie.oscarsCount}</td>
                         <td>{movie.director ? movie.director.name : 'Н/Д'}</td>
                         <td>{movie.length}</td>

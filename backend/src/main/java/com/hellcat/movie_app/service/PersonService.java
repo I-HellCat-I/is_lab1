@@ -35,4 +35,26 @@ public class PersonService {
 
         return personRepository.save(person);
     }
+
+    public Person update(Long id, PersonDto dto) {
+        Person person = personRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Персона не найдена"));
+
+        person.setName(dto.getName());
+        person.setEyeColor(dto.getEyeColor());
+        person.setHairColor(dto.getHairColor());
+        person.setHeight(dto.getHeight());
+        person.setNationality(dto.getNationality());
+
+        // Обновляем связь с локацией
+        var location = locationRepository.findById(dto.getLocation().getId())
+                .orElseThrow(() -> new RuntimeException("Локация не найдена"));
+        person.setLocation(location);
+
+        return personRepository.save(person);
+    }
+
+    public void delete(Long id) {
+        personRepository.deleteById(id);
+    }
 }

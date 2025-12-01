@@ -22,7 +22,7 @@ services:
       # т.к. с ним общается только Nginx внутри Docker-сети
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/moviedb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/moviedb?stringtype=unspecified
       SPRING_DATASOURCE_USERNAME: movieuser
       SPRING_DATASOURCE_PASSWORD: moviepassword
       SPRING_JPA_DATABASE-PLATFORM: org.eclipse.persistence.platform.database.PostgreSQLPlatform

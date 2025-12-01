@@ -26,4 +26,16 @@ public class LocationController {
     public ResponseEntity<Location> create(@Valid @RequestBody LocationDto dto) {
         return new ResponseEntity<>(locationService.create(dto), HttpStatus.CREATED);
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Location> update(@PathVariable Long id, @Valid @RequestBody LocationDto dto) {
+        // Простейшая реализация: ищем, обновляем поля, сохраняем
+        return ResponseEntity.ok(locationService.update(id, dto));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        locationService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }

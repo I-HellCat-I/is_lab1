@@ -10,6 +10,7 @@ const emptyMovieForm = {
     name: '',
     coordinatesX: '',
     coordinatesY: '',
+    coordinates: '',
     oscarsCount: '',
     budget: '',
     totalBoxOffice: '',
@@ -23,6 +24,7 @@ const emptyMovieForm = {
 };
 
 function MovieForm({ movie, onSave, onCancel, onAddPerson, onAddLocation }) {
+
     const [formData, setFormData] = useState(emptyMovieForm);
     const [errors, setErrors] = useState({});
     const [persons, setPersons] = useState([]);
@@ -33,8 +35,8 @@ function MovieForm({ movie, onSave, onCancel, onAddPerson, onAddLocation }) {
         if (movie) {
             setFormData({
                 name: movie.name || '',
-                coordinatesX: movie.coordinatesX || '',
-                coordinatesY: movie.coordinatesY || '',
+                coordinatesX: movie.coordinates ? movie.coordinates.x : '',
+                coordinatesY: movie.coordinates ? movie.coordinates.y : '',
                 oscarsCount: movie.oscarsCount || '',
                 budget: movie.budget || '',
                 totalBoxOffice: movie.totalBoxOffice || '',
@@ -83,7 +85,6 @@ function MovieForm({ movie, onSave, onCancel, onAddPerson, onAddLocation }) {
         if (formData.budget && (isNaN(Number(formData.budget)) || Number(formData.budget) <= 0)) newErrors.budget = 'Бюджет должен быть числом > 0.';
         if (formData.coordinatesY && Number(formData.coordinatesY) <= -158) newErrors.coordinatesY = 'Координата Y должна быть > -158.';
         if (!formData.screenwriterId) newErrors.screenwriterId = 'Сценарист - обязательное поле!';
-        //... другие правила
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
