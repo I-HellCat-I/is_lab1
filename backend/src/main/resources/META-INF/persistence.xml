@@ -12,6 +12,7 @@
         <class>com.hellcat.movie_app.entity.Person</class>
         <class>com.hellcat.movie_app.entity.Coordinates</class>
         <class>com.hellcat.movie_app.entity.Location</class>
+        <class>com.hellcat.movie_app.entity.ImportHistory</class>
 
         <!-- Это говорит, что даже если мы что-то не перечислили,
              он все равно должен попытаться найти -->

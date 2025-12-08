@@ -56,8 +56,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
-    // Указываем, что встроенный Tomcat будет предоставлен средой выполнения
-    //providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0'
 }
 
 tasks.named('test') {

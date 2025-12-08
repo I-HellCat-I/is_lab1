@@ -16,7 +16,6 @@ services:
       context: ./backend
       cache_from:
         - gradle_cache:/home/gradle/.gradle
-    restart: unless-stopped
     ports:
       # Этот порт теперь не обязательно открывать наружу,
       # т.к. с ним общается только Nginx внутри Docker-сети
@@ -26,6 +25,11 @@ services:
       SPRING_DATASOURCE_USERNAME: movieuser
       SPRING_DATASOURCE_PASSWORD: moviepassword
       SPRING_JPA_DATABASE-PLATFORM: org.eclipse.persistence.platform.database.PostgreSQLPlatform
+      SPRING_SERVLET_MULTIPART_MAX-FILE-SIZE: 512MB
+      SPRING_SERVLET_MULTIPART_MAX-REQUEST-SIZE: 512MB
+      SPRING_DATASOURCE_HIKARI_MAXIMUM-POOL-SIZE: 60
+        # Увеличиваем таймаут ожидания соединения (чтобы не падал сразу)
+      SPRING_DATASOURCE_HIKARI_CONNECTION-TIMEOUT: 30000
       # ВАЖНО: отключаем автоматическую генерацию схемы от JPA, так как мы управляем ей сами
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate # или none
     depends_on:

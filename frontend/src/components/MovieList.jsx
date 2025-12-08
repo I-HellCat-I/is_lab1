@@ -215,6 +215,9 @@ function MovieList() {
                 <button onClick={() => navigate('/management')} className="management-link-button">
                     Управление данными
                 </button>
+                <button onClick={() => navigate('/import')} className="import-link-button" style={{ marginLeft: '10px', background: '#2196F3' }}>
+                    Импорт
+                </button>
             </div>
 
             {loading && <div>Загрузка данных с Политбюро...</div>}

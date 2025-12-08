@@ -1,5 +1,6 @@
 package com.hellcat.movie_app.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.hellcat.movie_app.entity.MovieGenre;
 import com.hellcat.movie_app.entity.MpaaRating;
 import jakarta.validation.constraints.DecimalMin;
@@ -47,5 +48,29 @@ public class MovieDto {
     @Data
     public static class PersonRef {
         private Long id;
+    }
+
+    @JsonProperty("directorId")
+    public void setDirectorId(Long id) {
+        if (id != null) {
+            this.director = new PersonRef();
+            this.director.setId(id);
+        }
+    }
+
+    @JsonProperty("screenwriterId")
+    public void setScreenwriterId(Long id) {
+        if (id != null) {
+            this.screenwriter = new PersonRef();
+            this.screenwriter.setId(id);
+        }
+    }
+
+    @JsonProperty("operatorId")
+    public void setOperatorId(Long id) {
+        if (id != null) {
+            this.operator = new PersonRef();
+            this.operator.setId(id);
+        }
     }
 }

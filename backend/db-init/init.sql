@@ -69,6 +69,17 @@ CREATE TABLE movies (
                         CONSTRAINT fk_operator FOREIGN KEY (operator_id) REFERENCES persons(id)
 );
 
+CREATE TABLE import_history (
+                                id BIGSERIAL PRIMARY KEY,
+                                file_name VARCHAR(255) NOT NULL,
+                                status VARCHAR(50) NOT NULL, -- STARTED, SUCCESS, FAILED
+                                added_count INTEGER DEFAULT 0,
+                                failed_count INTEGER DEFAULT 0,
+                                start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                end_time TIMESTAMP,
+                                log_info TEXT -- Поле для хранения логов о воркерах
+);
+
 --- ДОБАВЛЕНИЕ ТЕСТОВЫХ ДАННЫХ ---
 
 -- Добавляем локации

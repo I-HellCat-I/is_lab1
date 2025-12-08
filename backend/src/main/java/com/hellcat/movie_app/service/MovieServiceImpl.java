@@ -5,6 +5,8 @@ import com.hellcat.movie_app.dto.*;
 import com.hellcat.movie_app.entity.*;
 import com.hellcat.movie_app.exception.EntityNotFoundException;
 import com.hellcat.movie_app.repository.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +43,36 @@ public class MovieServiceImpl implements MovieService {
     public Movie findById(Long id) {
         return movieRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Movie with id " + id + " not found"));
+    }
+
+    @Override
+    @Transactional
+    public Movie create(MovieDto movieDto) {
+        Movie movie = new Movie();
+        mapDtoToEntity(movie, movieDto); // Используем маппер
+        Movie savedMovie = movieRepository.save(movie);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                webSocketHandler.broadcast(new WebSocketMessage("CREATED", savedMovie));
+            }
+        });
+        return savedMovie;
+    }
+
+    @Override
+    @Transactional
+    public Movie update(Long id, MovieDto movieDto) {
+        Movie existingMovie = findById(id);
+        mapDtoToEntity(existingMovie, movieDto); // Используем маппер
+        Movie updatedMovie = movieRepository.save(existingMovie);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                webSocketHandler.broadcast(new WebSocketMessage("UPDATED", updatedMovie));
+            }
+        });
+        return updatedMovie;
     }
 
 
@@ -97,36 +129,6 @@ public class MovieServiceImpl implements MovieService {
         }
     }
 
-    @Override
-    @Transactional
-    public Movie create(MovieDto movieDto) {
-        Movie movie = new Movie();
-        mapDtoToEntity(movie, movieDto); // Используем маппер
-        Movie savedMovie = movieRepository.save(movie);
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                webSocketHandler.broadcast(new WebSocketMessage("CREATED", savedMovie));
-            }
-        });
-        return savedMovie;
-    }
-
-    @Override
-    @Transactional
-    public Movie update(Long id, MovieDto movieDto) {
-        Movie existingMovie = findById(id);
-        mapDtoToEntity(existingMovie, movieDto); // Используем маппер
-        Movie updatedMovie = movieRepository.save(existingMovie);
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                webSocketHandler.broadcast(new WebSocketMessage("UPDATED", updatedMovie));
-            }
-        });
-        return updatedMovie;
-    }
-
     // Обновляем mapDtoToEntity
     private void mapDtoToEntity(Movie movie, MovieDto dto) {
         movie.setName(dto.getName());
@@ -171,8 +173,8 @@ public class MovieServiceImpl implements MovieService {
     }
 
     // Обновляем WebSocket сообщение
-    @lombok.Data
-    @lombok.AllArgsConstructor
+    @Data
+    @AllArgsConstructor
     private static class WebSocketMessage {
         private String type; // Поле 'type' вместо 'action'
         private Object payload;
