@@ -27,6 +27,9 @@ public class ImportHistory {
     @Column(columnDefinition = "TEXT", name = "log_info")
     private String logInfo;
 
+    @Column(name = "expected_count")
+    private Integer expectedCount;
+
     @PrePersist
     public void onCreate() {
         this.startTime = LocalDateTime.now();

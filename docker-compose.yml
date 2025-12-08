@@ -11,6 +11,18 @@ services:
     depends_on:
       - backend
 
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: movie_rabbitmq
+    ports:
+      - "5672:5672"   # Порт для общения приложений
+      - "15672:15672" # Веб-интерфейс (http://localhost:15672, guest/guest)
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -21,21 +33,32 @@ services:
       # т.к. с ним общается только Nginx внутри Docker-сети
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/moviedb?stringtype=unspecified
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/moviedb?stringtype=unspecified&reWriteBatchedInserts=true
       SPRING_DATASOURCE_USERNAME: movieuser
       SPRING_DATASOURCE_PASSWORD: moviepassword
+
       SPRING_JPA_DATABASE-PLATFORM: org.eclipse.persistence.platform.database.PostgreSQLPlatform
       SPRING_SERVLET_MULTIPART_MAX-FILE-SIZE: 512MB
       SPRING_SERVLET_MULTIPART_MAX-REQUEST-SIZE: 512MB
       SPRING_DATASOURCE_HIKARI_MAXIMUM-POOL-SIZE: 60
+
+      SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_BATCH_SIZE: 50
+      SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_INSERTS: true
+      SPRING_JPA_PROPERTIES_HIBERNATE_ORDER_UPDATES: true
         # Увеличиваем таймаут ожидания соединения (чтобы не падал сразу)
       SPRING_DATASOURCE_HIKARI_CONNECTION-TIMEOUT: 30000
       # ВАЖНО: отключаем автоматическую генерацию схемы от JPA, так как мы управляем ей сами
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate # или none
     depends_on:
       db:
-        condition: service_healthy # <--- Ждать, пока healthcheck не пройдет
-
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
   # Наша база данных
   db:
     image: postgres:16

@@ -77,7 +77,8 @@ CREATE TABLE import_history (
                                 failed_count INTEGER DEFAULT 0,
                                 start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                 end_time TIMESTAMP,
-                                log_info TEXT -- Поле для хранения логов о воркерах
+                                log_info TEXT, -- Поле для хранения логов о воркерах
+                                expected_count INTEGER
 );
 
 --- ДОБАВЛЕНИЕ ТЕСТОВЫХ ДАННЫХ ---
