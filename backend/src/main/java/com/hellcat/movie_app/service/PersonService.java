@@ -3,12 +3,14 @@ package com.hellcat.movie_app.service;
 import com.hellcat.movie_app.dto.PersonDto;
 import com.hellcat.movie_app.entity.Person;
 import com.hellcat.movie_app.exception.EntityNotFoundException;
+import com.hellcat.movie_app.exception.PersonAlreadyExistsException;
 import com.hellcat.movie_app.repository.LocationRepository;
 import com.hellcat.movie_app.repository.PersonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.zip.DataFormatException;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +25,7 @@ public class PersonService {
     public Person create(PersonDto dto) {
         // Torture
         if (personRepository.countByName(dto.getName()) > 0) {
-            throw new RuntimeException("Person with this name already exists!");
+            throw new PersonAlreadyExistsException();
         }
         try {
             Thread.sleep(200); // Имитация задержки (думаем...), чтобы расширить окно для гонки

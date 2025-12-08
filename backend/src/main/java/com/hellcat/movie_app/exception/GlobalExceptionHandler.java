@@ -1,8 +1,11 @@
 package com.hellcat.movie_app.exception;
 
+import jakarta.persistence.OptimisticLockException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -54,5 +57,51 @@ public class GlobalExceptionHandler {
         response.put("error", "Некорректные параметры импорта");
         response.put("message", exc.getMessage());
         return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler({OptimisticLockException.class, JpaOptimisticLockingFailureException.class})
+    public ResponseEntity<Map<String, String>> handleOptimisticLocking(Exception ex) {
+        return new ResponseEntity<>(
+                Map.of("error", "Conflict: Data has been modified by another user. Please refresh and try again."),
+                HttpStatus.CONFLICT // 409
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = "Нарушение целостности данных.";
+
+        // Пытаемся достать полезное сообщение от базы данных
+        // Обычно оно лежит глубоко в 'cause'
+        if (ex.getRootCause() != null) {
+            message = ex.getRootCause().getMessage();
+        }
+
+        return new ResponseEntity<>(
+                Map.of(
+                        "error", "Conflict",
+                        "message", "Database constraint violation: " + message
+                ),
+                HttpStatus.CONFLICT // 409
+        );
+    }
+
+    @ExceptionHandler(PersonAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handlePersonAlreadyExistsException(DataIntegrityViolationException ex) {
+        String message = "Создаваемый вами человек уже существует.";
+
+        // Пытаемся достать полезное сообщение от базы данных
+        // Обычно оно лежит глубоко в 'cause'
+        if (ex.getRootCause() != null) {
+            message = ex.getRootCause().getMessage();
+        }
+
+        return new ResponseEntity<>(
+                Map.of(
+                        "error", "Conflict",
+                        "message", "Database constraint violation: " + message
+                ),
+                HttpStatus.CONFLICT // 409
+        );
     }
 }

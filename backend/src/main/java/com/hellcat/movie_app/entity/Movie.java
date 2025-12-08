@@ -74,4 +74,7 @@ public class Movie {
     protected void onCreate() {
         this.creationDate = LocalDateTime.now();
     }
+
+    @Version
+    private Long version;
 }

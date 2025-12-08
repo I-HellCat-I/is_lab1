@@ -73,4 +73,6 @@ public class MovieDto {
             this.operator.setId(id);
         }
     }
+
+    private Long version;
 }

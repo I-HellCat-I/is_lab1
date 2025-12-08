@@ -55,7 +55,8 @@ CREATE TABLE movies (
                         operator_id BIGINT,
                         length INTEGER NOT NULL,
                         golden_palm_count INTEGER NOT NULL,
-                        genre movie_genre
+                        genre movie_genre,
+                        version BIGINT DEFAULT 0,
     -- Ограничения
                         CONSTRAINT movies_oscars_count_check CHECK (oscars_count >= 0),
                         CONSTRAINT movies_budget_check CHECK (budget IS NULL OR budget > 0),
@@ -81,6 +82,8 @@ CREATE TABLE import_history (
                                 expected_count INTEGER
 );
 
+
+ALTER TABLE persons ADD CONSTRAINT unique_person_name UNIQUE (name);
 --- ДОБАВЛЕНИЕ ТЕСТОВЫХ ДАННЫХ ---
 
 -- Добавляем локации
