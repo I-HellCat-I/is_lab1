@@ -21,6 +21,15 @@ public class PersonService {
     }
 
     public Person create(PersonDto dto) {
+        // Torture
+        if (personRepository.countByName(dto.getName()) > 0) {
+            throw new RuntimeException("Person with this name already exists!");
+        }
+        try {
+            Thread.sleep(200); // Имитация задержки (думаем...), чтобы расширить окно для гонки
+        } catch (InterruptedException e) {}
+
+
         Person person = new Person();
         person.setName(dto.getName());
         person.setEyeColor(dto.getEyeColor());
