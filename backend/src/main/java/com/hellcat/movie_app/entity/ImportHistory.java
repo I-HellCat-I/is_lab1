@@ -30,6 +30,9 @@ public class ImportHistory {
     @Column(name = "expected_count")
     private Integer expectedCount;
 
+    @Column(name = "minio_object_name")
+    private String minioObjectName;
+
     @PrePersist
     public void onCreate() {
         this.startTime = LocalDateTime.now();

@@ -50,6 +50,17 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-postgresql'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    implementation 'com.alibaba:druid-spring-boot-starter:1.2.27'
+
+    // 2. MinIO (S3 Storage)
+    implementation 'io.minio:minio:8.6.0'
+
+    // 3. Caching: Ehcache + Spring Cache
+    implementation 'org.springframework.boot:spring-boot-starter-cache:4.0.0'
+    implementation 'org.ehcache:ehcache:3.11.1'
+
+    // 4. AOP (для логирования кэша)
+    implementation 'org.springframework.boot:spring-boot-starter-aop:4.0.0-M1'
 
     // Подключаем EclipseLink как JPA провайдер
     implementation 'org.eclipse.persistence:eclipselink:5.0.0-B11'
@@ -58,6 +69,14 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0'
+}
+
+tasks.withType(Jar).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.withType(Copy).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 tasks.named('test') {

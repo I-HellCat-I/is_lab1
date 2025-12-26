@@ -6,6 +6,7 @@ import com.hellcat.movie_app.exception.EntityNotFoundException;
 import com.hellcat.movie_app.repository.LocationRepository;
 import com.hellcat.movie_app.repository.PersonRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -61,6 +62,30 @@ public class PersonService {
         person.setLocation(location);
 
         return personRepository.save(person);
+    }
+
+    @Cacheable(value = "persons", key = "#id")
+    public PersonDto findById(Long id) { // Вам нужно будет добавить метод findById, возвращающий DTO или Entity
+        Person person = personRepository.findById(id).orElseThrow();
+        // Маппим в DTO, так как кэшировать Entity опасно (lazy loading)
+        return mapToDto(person);
+    }
+
+    private PersonDto mapToDto(Person person) {
+        PersonDto dto = new PersonDto();
+        dto.setName(person.getName());
+        dto.setEyeColor(person.getEyeColor());
+        dto.setHairColor(person.getHairColor());
+        dto.setHeight(person.getHeight());
+        dto.setNationality(person.getNationality());
+
+        // Маппим вложенную локацию
+        if (person.getLocation() != null) {
+            PersonDto.LocationRef locRef = new PersonDto.LocationRef();
+            locRef.setId(person.getLocation().getId());
+            dto.setLocation(locRef);
+        }
+        return dto;
     }
 
     public void delete(Long id) {

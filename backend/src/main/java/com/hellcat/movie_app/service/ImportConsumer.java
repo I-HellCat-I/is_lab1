@@ -24,10 +24,6 @@ public class ImportConsumer {
     private final ImportHistoryRepository historyRepository;
     private final MovieWebSocketHandler webSocketHandler;
 
-    // --- ИСПРАВЛЕНИЕ 1: concurrency = "1-20" ---
-    // Это заставляет Rabbit начать с 1 потребителя.
-    // Если очередь растет (а она будет расти при 270МБ), он будет добавлять воркеров.
-    // Это визуально и технически выполняет требование "добавлять воркеров при нагрузке".
     @RabbitListener(queues = RabbitConfig.IMPORT_QUEUE, concurrency = "1-20")
     public void consumeBatch(ImportTaskDto task) {
         int success = 0;
@@ -36,8 +32,7 @@ public class ImportConsumer {
         List<MovieDto> batch = task.getMovies();
         if (batch == null || batch.isEmpty()) return;
 
-        // Имитация бурной деятельности, чтобы Rabbit успел понять, что очередь растет
-        // и добавил воркеров. Иначе он обработает все одним потоком слишком быстро.
+
         try { Thread.sleep(50); } catch (InterruptedException e) {}
 
         for (MovieDto dto : batch) {

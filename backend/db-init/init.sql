@@ -78,7 +78,8 @@ CREATE TABLE import_history (
                                 start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                                 end_time TIMESTAMP,
                                 log_info TEXT, -- Поле для хранения логов о воркерах
-                                expected_count INTEGER
+                                expected_count INTEGER,
+                                minio_object_name TEXT
 );
 
 --- ДОБАВЛЕНИЕ ТЕСТОВЫХ ДАННЫХ ---

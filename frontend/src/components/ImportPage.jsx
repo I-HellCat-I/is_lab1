@@ -89,6 +89,7 @@ function ImportPage() {
                     <th>ID</th>
                     <th>Файл</th>
                     <th>Статус</th>
+                    <th>Действие</th>
                     <th>Добавлено</th>
                     <th>Ошибок</th>
                     <th>Лог воркеров</th>
@@ -103,6 +104,16 @@ function ImportPage() {
                             color: h.status === 'SUCCESS' ? 'lightgreen' : (h.status === 'FAILED' ? 'red' : 'orange')
                         }}>
                             {h.status}
+                        </td>
+                        <td>
+                            <a
+                                href={`/api/import/${h.id}/file`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#2196F3', textDecoration: 'underline' }}
+                            >
+                                Скачать исходник
+                            </a>
                         </td>
                         <td>{h.addedCount}</td>
                         <td>{h.failedCount}</td>

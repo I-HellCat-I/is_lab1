@@ -23,16 +23,45 @@ services:
       timeout: 5s
       retries: 5
 
+  minio:
+    image: minio/minio:latest
+    container_name: movie_minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000" # API port
+      - "9001:9001" # Console port
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
   backend:
     build:
       context: ./backend
       cache_from:
         - gradle_cache:/home/gradle/.gradle
     ports:
-      # Этот порт теперь не обязательно открывать наружу,
-      # т.к. с ним общается только Nginx внутри Docker-сети
       - "8080:8080"
     environment:
+      SPRING_DATASOURCE_TYPE: com.alibaba.druid.pool.DruidDataSource
+      SPRING_DATASOURCE_DRUID_INITIAL-SIZE: 5
+      SPRING_DATASOURCE_DRUID_MIN-IDLE: 5
+      SPRING_DATASOURCE_DRUID_MAX-ACTIVE: 20
+      SPRING_DATASOURCE_DRUID_MAX-WAIT: 60000
+      SPRING_DATASOURCE_DRUID_TEST-ON-BORROW: true
+      SPRING_DATASOURCE_DRUID_VALIDATION-QUERY: SELECT 1
+
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: movie-imports
+
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
@@ -82,3 +111,4 @@ services:
 volumes:
   postgres_data:
   gradle_cache:
+  minio_data:
