@@ -64,71 +64,81 @@ public class ImportService {
      */
     public void handleImport(MultipartFile[] files) {
         for (MultipartFile file : files) {
-            String objectName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            log.info("Starting distributed transaction for file: {}", file.getOriginalFilename());
-
             try {
-                // ШАГ 1: Загрузка в MinIO (Внешний ресурс 1)
-                // Если здесь упадет, ничего страшного, в БД ничего нет.
-                try (InputStream in = file.getInputStream()) {
-                    storageService.uploadFile(objectName, in, file.getContentType());
-                }
-                log.info("Step 1: Uploaded to MinIO as {}", objectName);
+                // ШАГ 1 (СИНХРОННО): Сохраняем файл на диск, пока HTTP запрос жив
+                Path tempPath = Files.createTempFile("import_upload_", "_" + file.getOriginalFilename());
+                File tempFile = tempPath.toFile();
+                file.transferTo(tempFile); // Или FileCopyUtils.copy
 
-                // Имитация сбоя для проверки (раскомментировать для защиты)
-                // if (file.getOriginalFilename().contains("fail")) throw new RuntimeException("Simulated Logic Error");
-
-                // ШАГ 2: Сохранение метаданных в БД и запуск обработки (Внешний ресурс 2)
-                // Если упадет здесь, сработает catch, и мы удалим файл из MinIO.
-                self.createImportRecordAndStartProcessing(file.getOriginalFilename(), objectName);
-
-                log.info("Step 2: Database record created. Transaction complete.");
+                // ШАГ 2: Запускаем асинхронную обработку, передавая File, а не MultipartFile
+                self.prepareAndProcessAsync(tempFile, file.getOriginalFilename(), file.getContentType());
 
             } catch (Exception e) {
-                log.error("Distributed transaction FAILED. Initiating ROLLBACK for {}", objectName, e);
-
-                // --- КОМПЕНСАЦИЯ (ROLLBACK) ---
-                try {
-                    storageService.deleteFile(objectName);
-                    log.info("Rollback SUCCESS: File deleted from MinIO");
-                } catch (Exception ex) {
-                    // Это критическая ситуация (нужен ручной разбор или ретрайер)
-                    log.error("Rollback FAILED: Could not delete file from MinIO. Orphan file: {}", objectName, ex);
-                }
-
-                // Важно: не проглатываем исключение, чтобы клиент получил 500
-                throw new RuntimeException("Import failed: " + e.getMessage(), e);
+                log.error("Failed to prepare file for import", e);
+                // Тут можно кинуть исключение, чтобы пользователь узнал сразу
             }
         }
     }
 
-    /**
-     * Создает запись в БД и инициирует асинхронный процесс.
-     * Выделено в отдельный метод для управления транзакцией БД.
-     */
+    // --- АСИНХРОННАЯ ОБЕРТКА ---
+    // Принимает File, имя и тип контента
+    @Async("taskExecutor")
+    public void prepareAndProcessAsync(File tempFile, String originalFilename, String contentType) {
+        String objectName = UUID.randomUUID() + "_" + originalFilename;
+        log.info("Starting distributed transaction for file: {}", originalFilename);
+
+        try {
+            // ШАГ 1: Загрузка в MinIO из временного файла
+            try (InputStream in = new FileInputStream(tempFile)) {
+                storageService.uploadFile(objectName, in, contentType);
+            }
+            log.info("Step 1: Uploaded to MinIO as {}", objectName);
+
+            // Имитация сбоя
+            // if (originalFilename.contains("fail")) throw new RuntimeException("Simulated Logic Error");
+
+            // ШАГ 2: Сохранение в БД и запуск парсинга
+            self.createImportRecordAndStartProcessing(originalFilename, objectName);
+
+            log.info("Step 2: Database record created. Transaction complete.");
+
+        } catch (Exception e) {
+            log.error("Distributed transaction FAILED. Initiating ROLLBACK for {}", objectName, e);
+            try {
+                storageService.deleteFile(objectName); // Компенсация
+                log.info("Rollback SUCCESS");
+            } catch (Exception ex) {
+                log.error("Rollback FAILED", ex);
+            }
+        } finally {
+            // ВАЖНО: Удаляем временный файл, который мы создали в handleImport
+            if (tempFile.exists()) {
+                tempFile.delete();
+            }
+        }
+    }
+
+    // --- createImportRecordAndStartProcessing ---
     @Transactional
     public void createImportRecordAndStartProcessing(String originalFileName, String objectName) throws Exception {
-        // 1. Создаем запись в истории
+        // 1. Создаем запись
         ImportHistory history = new ImportHistory();
         history.setFileName(originalFileName);
-        history.setMinioObjectName(objectName); // Ссылка на файл в MinIO
+        history.setMinioObjectName(objectName);
         history.setStatus("QUEUED");
         history.setLogInfo("Uploaded to storage. Downloading for processing...\n");
 
-        ImportHistory savedHistory = historyRepository.saveAndFlush(history); // Коммит в БД будет после выхода из метода
+        ImportHistory savedHistory = historyRepository.saveAndFlush(history); // FLUSH ОБЯЗАТЕЛЕН
 
-        // 2. Скачиваем файл из MinIO во временный локальный файл для парсинга
-        // (Парсить поток из сети напрямую опасно из-за таймаутов, надежнее скачать локально)
-        Path tempPath = Files.createTempFile("import_proc_", "_" + originalFileName);
-        File tempFile = tempPath.toFile();
-
+        // 2. Скачиваем файл из MinIO для парсинга (или используем тот же tempFile, если передать его)
+        // Правильнее скачать заново, чтобы проверить, что в MinIO все ок.
+        Path procPath = Files.createTempFile("import_proc_", "_" + originalFileName);
         try (InputStream in = storageService.getFile(objectName)) {
-            Files.copy(in, tempPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(in, procPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        // 3. Запускаем асинхронный парсинг
-        // Передаем ID истории, а не объект, чтобы избежать Detached Entity проблем
-        self.processFileAsync(tempFile, savedHistory.getId(), originalFileName);
+        // 3. Запускаем парсинг
+        self.processFileAsync(procPath.toFile(), savedHistory.getId(), originalFileName);
     }
 
     /**
