@@ -37,4 +37,9 @@ public class PersonController {
         personService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PersonDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(personService.findById(id));
+    }
 }
