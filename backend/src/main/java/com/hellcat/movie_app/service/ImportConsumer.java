@@ -24,7 +24,7 @@ public class ImportConsumer {
     private final ImportHistoryRepository historyRepository;
     private final MovieWebSocketHandler webSocketHandler;
 
-    @RabbitListener(queues = RabbitConfig.IMPORT_QUEUE, concurrency = "1-20")
+    @RabbitListener(queues = RabbitConfig.IMPORT_QUEUE, concurrency = "5-20")
     public void consumeBatch(ImportTaskDto task) {
         int success = 0;
         int fail = 0;
