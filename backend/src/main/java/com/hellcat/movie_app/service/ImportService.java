@@ -49,7 +49,6 @@ public class ImportService {
     @Autowired
     private ImportService self;
 
-    // --- Настройка парсеров ---
     private final JsonFactory jsonFactory = new JsonFactory();
     private final YAMLFactory yamlFactory = YAMLFactory.builder()
             .loaderOptions(new LoaderOptions() {{
@@ -80,24 +79,28 @@ public class ImportService {
         }
     }
 
-    // --- АСИНХРОННАЯ ОБЕРТКА ---
-    // Принимает File, имя и тип контента
+
+    /**
+    * --- АСИНХРОННАЯ ОБЕРТКА ---
+    * Принимает File, имя и тип контента
+     * */
     @Async("taskExecutor")
     public void prepareAndProcessAsync(File tempFile, String originalFilename, String contentType) {
         String objectName = UUID.randomUUID() + "_" + originalFilename;
         log.info("Starting distributed transaction for file: {}", originalFilename);
 
         try {
-            // ШАГ 1: Загрузка в MinIO из временного файла
             try (InputStream in = new FileInputStream(tempFile)) {
                 storageService.uploadFile(objectName, in, contentType);
             }
             log.info("Step 1: Uploaded to MinIO as {}", objectName);
 
-            // Имитация сбоя
-            // if (originalFilename.contains("fail")) throw new RuntimeException("Simulated Logic Error");
+            // DEMO
+            if (originalFilename.contains("fail")) {
+                log.error("SIMULATING SERVER CRASH / LOGIC ERROR...");
+                throw new RuntimeException("Simulated Logic Error between MinIO and DB");
+            }
 
-            // ШАГ 2: Сохранение в БД и запуск парсинга
             self.createImportRecordAndStartProcessing(originalFilename, objectName);
 
             log.info("Step 2: Database record created. Transaction complete.");
@@ -118,20 +121,16 @@ public class ImportService {
         }
     }
 
-    // --- createImportRecordAndStartProcessing ---
     @Transactional
     public void createImportRecordAndStartProcessing(String originalFileName, String objectName) throws Exception {
-        // 1. Создаем запись
         ImportHistory history = new ImportHistory();
         history.setFileName(originalFileName);
         history.setMinioObjectName(objectName);
         history.setStatus("QUEUED");
         history.setLogInfo("Uploaded to storage. Downloading for processing...\n");
 
-        ImportHistory savedHistory = historyRepository.saveAndFlush(history); // FLUSH ОБЯЗАТЕЛЕН
+        ImportHistory savedHistory = historyRepository.saveAndFlush(history);
 
-        // 2. Скачиваем файл из MinIO для парсинга (или используем тот же tempFile, если передать его)
-        // Правильнее скачать заново, чтобы проверить, что в MinIO все ок.
         Path procPath = Files.createTempFile("import_proc_", "_" + originalFileName);
         try (InputStream in = storageService.getFile(objectName)) {
             Files.copy(in, procPath, StandardCopyOption.REPLACE_EXISTING);
@@ -157,7 +156,6 @@ public class ImportService {
                     ? yamlFactory : jsonFactory;
 
             try (JsonParser parser = factory.createParser(inputStream)) {
-                // Проверка на массив
                 if (parser.nextToken() != JsonToken.START_ARRAY) {
                     throw new IllegalStateException("Expected JSON/YAML array");
                 }
@@ -180,7 +178,6 @@ public class ImportService {
                     totalSent += batch.size();
                 }
 
-                // Фиксируем общее количество для отслеживания прогресса
                 historyRepository.setExpectedCount(historyId, totalSent);
 
                 String msg = String.format("File parsed. Sent %d records to Queue. Workers are processing...\n", totalSent);
@@ -188,7 +185,6 @@ public class ImportService {
             }
         } catch (Exception e) {
             log.error("Error processing file {}", originalFileName, e);
-            // Обновляем статус на FAILED
             ImportHistory h = historyRepository.findById(historyId).orElse(null);
             if (h != null) {
                 h.setStatus("FAILED");
@@ -196,7 +192,6 @@ public class ImportService {
                 self.updateLogSafe(historyId, "Error: " + e.getMessage());
             }
         } finally {
-            // Удаляем временный локальный файл (в MinIO он остается)
             if (fileOnDisk.exists()) {
                 fileOnDisk.delete();
             }
@@ -214,10 +209,6 @@ public class ImportService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateLogSafe(Long historyId, String message) {
         try {
-            // Используем нативный SQL update для лога тоже, чтобы избежать блокировок
-            // historyRepository.appendLog(historyId, message);
-            // Но для простоты оставим JPA saveAndFlush, т.к. этот метод вызывает только ОДИН поток (парсера)
-
             ImportHistory h = historyRepository.findById(historyId).orElse(null);
             if (h != null) {
                 String current = h.getLogInfo() == null ? "" : h.getLogInfo();
