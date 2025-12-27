@@ -1,8 +1,13 @@
 package com.hellcat.movie_app.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.persistence.exceptions.DatabaseException;
+import org.eclipse.persistence.exceptions.OptimisticLockException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.jpa.JpaOptimisticLockingFailureException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -71,5 +76,52 @@ public class GlobalExceptionHandler {
         response.put("error", "Ошибка коммуникации серверных компонентов, пожалуйста, обратитесь к администратору");
         response.put("message", ex.getMessage());
         return ResponseEntity.internalServerError().body(response);
+    }
+
+    @ExceptionHandler(PersonAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handlePersonAlreadyExists(PersonAlreadyExistsException ex) {
+        return new ResponseEntity<>(
+                Map.of("error", ex.getMessage()),
+                HttpStatus.CONFLICT // 409
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String message = "Database constraint violation";
+
+        if (ex.getRootCause() != null) {
+            message = ex.getRootCause().getMessage();
+        }
+
+        return new ResponseEntity<>(
+                Map.of("error", "Conflict: " + message),
+                HttpStatus.CONFLICT // 409
+        );
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<Map<String, String>> handleTransactionException(TransactionSystemException ex) {
+        Throwable cause = ex.getRootCause();
+
+        if (cause instanceof OptimisticLockException || cause instanceof JpaOptimisticLockingFailureException) {
+            return new ResponseEntity<>(
+                    Map.of("error", "Conflict: Data has been modified by another user."),
+                    HttpStatus.CONFLICT
+            );
+        }
+
+        return new ResponseEntity<>(
+                Map.of("error", cause.getMessage()),
+                HttpStatus.CONFLICT
+        );
+    }
+
+    @ExceptionHandler({OptimisticLockException.class, JpaOptimisticLockingFailureException.class}) // <-- Ловим оба типа
+    public ResponseEntity<Map<String, String>> handleOptimisticLockException(Exception ex) { // <-- Аргумент Exception (общий предок)
+        return new ResponseEntity<>(
+                Map.of("error", "Conflict: Data has been modified by another user. Please refresh and try again."),
+                HttpStatus.CONFLICT
+        );
     }
 }

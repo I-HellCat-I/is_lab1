@@ -65,81 +65,87 @@ public class ImportService {
     public void handleImport(MultipartFile[] files) {
         for (MultipartFile file : files) {
             try {
-                // ШАГ 1 (СИНХРОННО): Сохраняем файл на диск, пока HTTP запрос жив
                 Path tempPath = Files.createTempFile("import_upload_", "_" + file.getOriginalFilename());
                 File tempFile = tempPath.toFile();
-                file.transferTo(tempFile); // Или FileCopyUtils.copy
-
-                // ШАГ 2: Запускаем асинхронную обработку, передавая File, а не MultipartFile
+                file.transferTo(tempFile);
                 self.prepareAndProcessAsync(tempFile, file.getOriginalFilename(), file.getContentType());
-
             } catch (Exception e) {
-                log.error("Failed to prepare file for import", e);
-                throw new BadFileException();
+                log.error("Failed to locally prepare file", e);
             }
         }
     }
 
-
-    /**
-     * АСИНХРОННАЯ ОБЕРТКА
-     * Принимает File, имя и тип контента
-     * */
     @Async("taskExecutor")
     public void prepareAndProcessAsync(File tempFile, String originalFilename, String contentType) {
         String objectName = UUID.randomUUID() + "_" + originalFilename;
-        log.info("Starting distributed transaction for file: {}", originalFilename);
+        ImportHistory history = null;
 
         try {
+            // ШАГ 1: Фиксируем намерение (State: UPLOADING)
+            // Создаем запись в БД СРАЗУ. Теперь у нас есть ID транзакции.
+            history = self.createInitialHistoryRecord(originalFilename, objectName);
+
+            log.info("Transaction started. ID: {}, MinIO Name: {}", history.getId(), objectName);
+
+            // ШАГ 2: Загрузка в MinIO
+            // Это самая опасная операция, но мы уже "в домике" (запись в БД есть)
             try (InputStream in = new FileInputStream(tempFile)) {
                 storageService.uploadFile(objectName, in, contentType);
             }
-            log.info("Step 1: Uploaded to MinIO as {}", objectName);
 
-            // Todo: DEMO delete when done
-            if (originalFilename.contains("fail")) {
-                log.error("SIMULATING SERVER CRASH / LOGIC ERROR...");
-                throw new RuntimeException("Simulated Logic Error between MinIO and DB");
-            }
+            log.info("Uploaded to MinIO. Updating status...");
 
-            self.createImportRecordAndStartProcessing(originalFilename, objectName);
+            // Имитация сбоя (раскомментировать для защиты)
+            // if (originalFilename.contains("fail")) throw new RuntimeException("MinIO is unreachable (Simulated)");
 
-            log.info("Step 2: Database record created. Transaction complete.");
+            // ШАГ 3: Обновляем статус на QUEUED (готов к обработке)
+            self.updateHistoryStatus(history.getId(), "QUEUED", "Upload successful. Starting parsing...\n");
+
+            // ШАГ 4: Запускаем парсинг
+            // Здесь мы не передаем файл, мы скачиваем его обратно из MinIO для проверки целостности
+            // (или используем локальный tempFile, но лучше скачать, чтобы проверить, что MinIO работает)
+            self.processFileAsync(tempFile, history.getId(), originalFilename);
 
         } catch (Exception e) {
-            log.error("Distributed transaction FAILED. Initiating ROLLBACK for {}", objectName, e);
-            try {
-                storageService.deleteFile(objectName); // Компенсация
-                log.info("Rollback SUCCESS");
-            } catch (Exception ex) {
-                log.error("Rollback FAILED", ex);
+            log.error("Import failed at upload stage", e);
+
+            // КОМПЕНСАЦИЯ:
+            // Мы не удаляем файл (вдруг MinIO лежит), мы помечаем запись как FAILED.
+            // Теперь у админа есть запись "Ошибка загрузки".
+            if (history != null) {
+                self.updateHistoryStatus(history.getId(), "FAILED", "Upload failed: " + e.getMessage());
             }
         } finally {
-            // Удаляем временный файл, который мы создали в handleImport
-            if (tempFile.exists()) {
-                tempFile.delete();
-            }
+            // Локальный временный файл больше не нужен
+            // (В processFileAsync мы его используем, поэтому удаляем там, либо передаем копию)
+            // В данной реализации я передаю tempFile дальше, поэтому здесь не удаляю.
+            // Удаление будет в processFileAsync.
         }
     }
 
-    @Transactional
-    public void createImportRecordAndStartProcessing(String originalFileName, String objectName) throws Exception {
-        ImportHistory history = new ImportHistory();
-        history.setFileName(originalFileName);
-        history.setMinioObjectName(objectName);
-        history.setStatus("QUEUED");
-        history.setLogInfo("Uploaded to storage. Downloading for processing...\n");
+    // --- ВСПОМОГАТЕЛЬНЫЕ ТРАНЗАКЦИОННЫЕ МЕТОДЫ ---
 
-        ImportHistory savedHistory = historyRepository.saveAndFlush(history);
-
-        Path procPath = Files.createTempFile("import_proc_", "_" + originalFileName);
-        try (InputStream in = storageService.getFile(objectName)) {
-            Files.copy(in, procPath, StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        // 3. Запускаем парсинг
-        self.processFileAsync(procPath.toFile(), savedHistory.getId(), originalFileName);
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ImportHistory createInitialHistoryRecord(String filename, String objectName) {
+        ImportHistory h = new ImportHistory();
+        h.setFileName(filename);
+        h.setMinioObjectName(objectName);
+        h.setStatus("UPLOADING"); // <-- Промежуточный статус
+        h.setLogInfo("Initiating upload to storage...\n");
+        return historyRepository.saveAndFlush(h);
     }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateHistoryStatus(Long id, String status, String logAppend) {
+        ImportHistory h = historyRepository.findById(id).orElse(null);
+        if (h != null) {
+            h.setStatus(status);
+            String currentLog = h.getLogInfo() == null ? "" : h.getLogInfo();
+            h.setLogInfo(currentLog + logAppend);
+            historyRepository.saveAndFlush(h);
+        }
+    }
+
 
     /**
      * Асинхронный метод парсинга и отправки в очередь.

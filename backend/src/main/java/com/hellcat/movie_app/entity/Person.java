@@ -35,4 +35,7 @@ public class Person {
 
     @Enumerated(EnumType.STRING)
     private Country nationality; // Поле может быть null
+
+    @Version
+    private Long version;
 }

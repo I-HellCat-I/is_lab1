@@ -43,6 +43,7 @@ public class MovieDto {
     @NotNull @Positive
     private Integer goldenPalmCount;
     private MovieGenre genre;
+    private Long version;
 
     // Вложенный класс для ссылок на персон
     @Data

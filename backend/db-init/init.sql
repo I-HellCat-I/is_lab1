@@ -35,7 +35,10 @@ CREATE TABLE persons (
                          location_id BIGINT,
                          height REAL NOT NULL,
                          nationality country,
+                         version BIGINT DEFAULT 0,
     -- Ограничения
+
+                         CONSTRAINT unique_person_name UNIQUE (name),
                          CONSTRAINT persons_height_check CHECK (height > 0),
                          CONSTRAINT fk_location FOREIGN KEY (location_id) REFERENCES locations(id)
 );
@@ -55,7 +58,8 @@ CREATE TABLE movies (
                         operator_id BIGINT,
                         length INTEGER NOT NULL,
                         golden_palm_count INTEGER NOT NULL,
-                        genre movie_genre
+                        genre movie_genre,
+                        version BIGINT DEFAULT 0,
     -- Ограничения
                         CONSTRAINT movies_oscars_count_check CHECK (oscars_count >= 0),
                         CONSTRAINT movies_budget_check CHECK (budget IS NULL OR budget > 0),
@@ -111,14 +115,7 @@ INSERT INTO persons (name, eyeColor, hairColor, location_id, height, nationality
 
 -- 3. Персоны (Persons)
 -- id 1-5
-INSERT INTO persons (name, eyeColor, hairColor, location_id, height, nationality) VALUES
-                                                                                      ('Андрей Тарковский', 'BROWN', 'BROWN', 1, 175.0, 'RUSSIA'),
-                                                                                      ('Stanley Kubrick', 'BROWN', 'BLACK', 2, 170.0, 'USA'),
-                                                                                      ('Christopher Nolan', 'BLUE', 'BROWN', 2, 181.0, 'USA'),
-                                                                                      ('Quentin Tarantino', 'BROWN', 'BLACK', 2, 185.0, 'USA'),
-                                                                                      ('Bong Joon-ho', 'BLACK', 'BLACK', 2, 182.0, 'SOUTH_KOREA');
 
--- id 6-10
 INSERT INTO persons (name, eyeColor, hairColor, location_id, height, nationality) VALUES
                                                                                         ('Сергей Эйзенштейн', 'BLUE', 'WHITE', 1, 168.0, 'RUSSIA'),
                                                                                         ('Steven Spielberg', 'BLUE', 'WHITE', 2, 172.0, 'USA'),

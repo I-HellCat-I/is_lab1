@@ -21,6 +21,7 @@ const emptyMovieForm = {
     length: '',
     goldenPalmCount: '',
     genre: '',
+    version: '',
 };
 
 function MovieForm({ movie, onSave, onCancel, onAddPerson, onAddLocation }) {
@@ -47,6 +48,7 @@ function MovieForm({ movie, onSave, onCancel, onAddPerson, onAddLocation }) {
                 length: movie.length || '',
                 goldenPalmCount: movie.goldenPalmCount || '',
                 genre: movie.genre || '',
+                version: movie.version || '',
             });
         } else {
             setFormData(emptyMovieForm);
@@ -117,6 +119,7 @@ function MovieForm({ movie, onSave, onCancel, onAddPerson, onAddLocation }) {
             director: formData.directorId ? { id: parseInt(formData.directorId, 10) } : null,
             screenwriter: { id: parseInt(formData.screenwriterId, 10) },
             operator: formData.operatorId ? { id: parseInt(formData.operatorId, 10) } : null,
+            version: formData.version || 0,
         };
 
         try {

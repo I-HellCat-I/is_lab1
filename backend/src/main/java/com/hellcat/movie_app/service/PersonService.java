@@ -3,16 +3,19 @@ package com.hellcat.movie_app.service;
 import com.hellcat.movie_app.dto.PersonDto;
 import com.hellcat.movie_app.entity.Person;
 import com.hellcat.movie_app.exception.EntityNotFoundException;
+import com.hellcat.movie_app.exception.PersonAlreadyExistsException;
 import com.hellcat.movie_app.repository.LocationRepository;
 import com.hellcat.movie_app.repository.PersonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class PersonService {
     private final PersonRepository personRepository;
     private final LocationRepository locationRepository;
@@ -21,10 +24,11 @@ public class PersonService {
         return personRepository.findAll();
     }
 
+    @Transactional
     public Person create(PersonDto dto) {
         // Torture
         if (personRepository.countByName(dto.getName()) > 0) {
-            throw new RuntimeException("Person with this name already exists!");
+            throw new PersonAlreadyExistsException();
         }
         try {
             Thread.sleep(200); // Имитация задержки (думаем...), чтобы расширить окно для гонки
@@ -46,6 +50,8 @@ public class PersonService {
         return personRepository.save(person);
     }
 
+
+    @Transactional
     public Person update(Long id, PersonDto dto) {
         Person person = personRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Персона не найдена"));
@@ -86,6 +92,7 @@ public class PersonService {
         return dto;
     }
 
+    @Transactional
     public void delete(Long id) {
         personRepository.deleteById(id);
     }

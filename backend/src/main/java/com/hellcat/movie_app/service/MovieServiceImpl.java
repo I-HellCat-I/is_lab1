@@ -20,6 +20,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MovieServiceImpl implements MovieService {
 
     private final MovieRepository movieRepository;
@@ -30,7 +31,6 @@ public class MovieServiceImpl implements MovieService {
     private final String WS_TOPIC = "/topic/movies";
 
     @Override
-    @Transactional(readOnly = true)
     public Page<Movie> findAll(Pageable pageable, String filter) {
         if (StringUtils.hasText(filter)) {
             return movieRepository.findByFilter(filter, pageable);
@@ -39,7 +39,6 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Movie findById(Long id) {
         return movieRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Movie with id " + id + " not found"));
@@ -66,6 +65,9 @@ public class MovieServiceImpl implements MovieService {
         Movie existingMovie = findById(id);
         mapDtoToEntity(existingMovie, movieDto); // Используем маппер
         Movie updatedMovie = movieRepository.save(existingMovie);
+        if (movieDto.getVersion() != null) {
+            existingMovie.setVersion(movieDto.getVersion());
+        }
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
@@ -80,9 +82,6 @@ public class MovieServiceImpl implements MovieService {
     @Transactional
     public void delete(Long id) {
         Movie movieToDelete = findById(id);
-        // По требованию: "Если при удалении объекта с ним связан другой объект, операция должна быть отменена"
-        // В данном случае Movie является центральным объектом. Удаление Person, если он режиссер,
-        // потребовало бы более сложной проверки. Удаление самого фильма не нарушает это правило в явном виде.
         movieRepository.deleteById(id);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -95,19 +94,16 @@ public class MovieServiceImpl implements MovieService {
     // --- Специальные операции ---
 
     @Override
-    @Transactional(readOnly = true)
     public Long getGoldenPalmCountSum() {
         return movieRepository.sumAllGoldenPalmCount();
     }
 
     @Override
-    @Transactional(readOnly = true)
     public long countByGoldenPalmCount(int count) {
         return movieRepository.countByGoldenPalmCount(count);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public long countByGoldenPalmCountLessThan(int count) {
         return movieRepository.countByGoldenPalmCountLessThan(count);
     }
@@ -138,6 +134,7 @@ public class MovieServiceImpl implements MovieService {
         movie.setLength(dto.getLength());
         movie.setGoldenPalmCount(dto.getGoldenPalmCount());
         movie.setGenre(dto.getGenre());
+        movie.setVersion(dto.getVersion());
 
         // Обрабатываем координаты
         Coordinates coordinates;
@@ -171,7 +168,6 @@ public class MovieServiceImpl implements MovieService {
         }
     }
 
-    // Обновляем WebSocket сообщение
     @Data
     @AllArgsConstructor
     private static class WebSocketMessage {
