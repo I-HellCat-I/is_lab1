@@ -38,4 +38,9 @@ public class LocationController {
         locationService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<LocationDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(locationService.findById(id));
+    }
 }

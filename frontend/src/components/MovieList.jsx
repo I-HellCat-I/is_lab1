@@ -11,8 +11,9 @@ import { useNavigate } from 'react-router-dom';
 Modal.setAppElement('#root');
 
 const API_URL = '/api/movies';
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 const wsHost = window.location.host;
-const WS_URL = `ws://${wsHost}/notifications`;
+const WS_URL = `${protocol}//${wsHost}/notifications`;
 
 const headers = [
     { key: 'id', name: 'ID' },

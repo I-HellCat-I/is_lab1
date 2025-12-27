@@ -87,6 +87,10 @@ services:
       SPRING_DATASOURCE_HIKARI_CONNECTION-TIMEOUT: 30000
       # ВАЖНО: отключаем автоматическую генерацию схемы от JPA, так как мы управляем ей сами
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate # или none
+
+
+      SPRING_CACHE_JCACHE_CONFIG: classpath:ehcache.xml
+      SPRING_CACHE_TYPE: jcache
     depends_on:
       db:
         condition: service_healthy

@@ -41,7 +41,14 @@ public class MovieWebSocketHandler extends TextWebSocketHandler {
 
             for (WebSocketSession session : sessions) {
                 if (session.isOpen()) {
-                    session.sendMessage(message);
+                    synchronized (session) {
+                        try {
+                            session.sendMessage(message);
+                        } catch (Exception e) {
+                            log.error("Failed to send message to session {}", session.getId(), e);
+                        }
+                    }
+                    // -----------------------------
                 }
             }
         } catch (Exception e) {

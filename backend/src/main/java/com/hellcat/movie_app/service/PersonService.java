@@ -65,9 +65,8 @@ public class PersonService {
     }
 
     @Cacheable(value = "persons", key = "#id")
-    public PersonDto findById(Long id) { // Вам нужно будет добавить метод findById, возвращающий DTO или Entity
+    public PersonDto findById(Long id) {
         Person person = personRepository.findById(id).orElseThrow();
-        // Маппим в DTO, так как кэшировать Entity опасно (lazy loading)
         return mapToDto(person);
     }
 
@@ -79,7 +78,6 @@ public class PersonService {
         dto.setHeight(person.getHeight());
         dto.setNationality(person.getNationality());
 
-        // Маппим вложенную локацию
         if (person.getLocation() != null) {
             PersonDto.LocationRef locRef = new PersonDto.LocationRef();
             locRef.setId(person.getLocation().getId());

@@ -1,7 +1,9 @@
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns="http://www.ehcache.org/v3"
+<config
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xmlns='http://www.ehcache.org/v3'
         xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core-3.0.xsd">
 
+    <!-- Кэш для Персон -->
     <cache alias="persons">
         <key-type>java.lang.Long</key-type>
         <value-type>com.hellcat.movie_app.dto.PersonDto</value-type>
@@ -9,8 +11,24 @@
             <ttl unit="minutes">10</ttl>
         </expiry>
         <resources>
+            <!-- 2000 записей в куче -->
             <heap unit="entries">2000</heap>
+            <!-- 10 МБ вне кучи (нужна сериализация) -->
             <offheap unit="MB">10</offheap>
         </resources>
     </cache>
+
+    <!-- Кэш для Локаций -->
+    <cache alias="locations">
+        <key-type>java.lang.Long</key-type>
+        <value-type>com.hellcat.movie_app.dto.LocationDto</value-type>
+        <expiry>
+            <ttl unit="minutes">30</ttl>
+        </expiry>
+        <resources>
+            <heap unit="entries">5000</heap>
+            <offheap unit="MB">5</offheap>
+        </resources>
+    </cache>
+
 </config>

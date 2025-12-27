@@ -7,8 +7,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class PersonDto {
+public class PersonDto implements Serializable {
     @NotBlank
     private String name;
     @NotNull
@@ -28,7 +30,7 @@ public class PersonDto {
 
     // Вложенный класс для ссылки на локацию, как этого ожидает фронтенд
     @Data
-    public static class LocationRef {
+    public static class LocationRef implements Serializable {
         @NotNull
         private Long id;
     }
