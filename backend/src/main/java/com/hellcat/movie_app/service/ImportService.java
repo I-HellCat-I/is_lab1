@@ -11,6 +11,7 @@ import com.hellcat.movie_app.config.WebSocketMessage;
 import com.hellcat.movie_app.dto.ImportTaskDto;
 import com.hellcat.movie_app.dto.MovieDto;
 import com.hellcat.movie_app.entity.ImportHistory;
+import com.hellcat.movie_app.exception.BadFileException;
 import com.hellcat.movie_app.repository.ImportHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -74,15 +75,15 @@ public class ImportService {
 
             } catch (Exception e) {
                 log.error("Failed to prepare file for import", e);
-                // Тут можно кинуть исключение, чтобы пользователь узнал сразу
+                throw new BadFileException();
             }
         }
     }
 
 
     /**
-    * --- АСИНХРОННАЯ ОБЕРТКА ---
-    * Принимает File, имя и тип контента
+     * АСИНХРОННАЯ ОБЕРТКА
+     * Принимает File, имя и тип контента
      * */
     @Async("taskExecutor")
     public void prepareAndProcessAsync(File tempFile, String originalFilename, String contentType) {
@@ -95,7 +96,7 @@ public class ImportService {
             }
             log.info("Step 1: Uploaded to MinIO as {}", objectName);
 
-            // DEMO
+            // Todo: DEMO delete when done
             if (originalFilename.contains("fail")) {
                 log.error("SIMULATING SERVER CRASH / LOGIC ERROR...");
                 throw new RuntimeException("Simulated Logic Error between MinIO and DB");
@@ -114,7 +115,7 @@ public class ImportService {
                 log.error("Rollback FAILED", ex);
             }
         } finally {
-            // ВАЖНО: Удаляем временный файл, который мы создали в handleImport
+            // Удаляем временный файл, который мы создали в handleImport
             if (tempFile.exists()) {
                 tempFile.delete();
             }

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,5 +55,21 @@ public class GlobalExceptionHandler {
         response.put("error", "Некорректные параметры импорта");
         response.put("message", exc.getMessage());
         return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(BadFileException.class)
+    public ResponseEntity<Map<String, String>> handleBadFileException(BadFileException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", ex.getMessage());
+        response.put("message", ex.getMessage());
+        return ResponseEntity.unprocessableContent().body(response);
+    }
+
+    @ExceptionHandler(UnknownHostException.class)
+    public ResponseEntity<Map<String, String>> handleUnknownHostException(UnknownHostException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Ошибка коммуникации серверных компонентов, пожалуйста, обратитесь к администратору");
+        response.put("message", ex.getMessage());
+        return ResponseEntity.internalServerError().body(response);
     }
 }

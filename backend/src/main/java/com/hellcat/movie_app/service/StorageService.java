@@ -21,7 +21,6 @@ public class StorageService {
     @PostConstruct
     @SneakyThrows
     public void init() {
-        // Создаем бакет при старте, если нет
         boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
         if (!found) {
             minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());

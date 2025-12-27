@@ -124,7 +124,6 @@ public class MovieServiceImpl implements MovieService {
         List<Person> directors = movieRepository.findDirectorsByGenre(genre);
         if (!directors.isEmpty()) {
             movieRepository.resetOscarsForDirectors(directors);
-            // Здесь можно отправить WebSocket-уведомление об массовом обновлении, если требуется
             webSocketHandler.broadcast(new WebSocketMessage("BATCH_UPDATE", "Oscars reset for directors of genre " + genre));
         }
     }

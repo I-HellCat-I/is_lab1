@@ -7,7 +7,7 @@ plugins {
 
 group = 'com.hellcat'
 version = '0.0.1-SNAPSHOT'
-description = 'huyeta'
+description = 'backend'
 
 java {
     toolchain {

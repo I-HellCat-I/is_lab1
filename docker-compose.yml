@@ -16,7 +16,7 @@ services:
     container_name: movie_rabbitmq
     ports:
       - "5672:5672"   # Порт для общения приложений
-      - "15672:15672" # Веб-интерфейс (http://localhost:15672, guest/guest)
+      - "15672:15672" # Админка (http://localhost:15672, guest/guest)
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 10s
